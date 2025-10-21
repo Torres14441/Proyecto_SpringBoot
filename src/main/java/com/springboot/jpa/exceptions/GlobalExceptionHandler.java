@@ -9,8 +9,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 
 import java.util.HashMap;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
+
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -49,7 +48,7 @@ public class GlobalExceptionHandler {
     @ExceptionHandler(HttpMessageNotReadableException.class)
     public ResponseEntity<Map<String, String>> handleJsonParseError(HttpMessageNotReadableException ex) {
         Map<String, String> error = new HashMap<>();
-        error.put("error", "Formato de datos inválido. Verifique los tipos esperados.");
+        error.put("error", "Formato de datos inválido.");
         return ResponseEntity.badRequest().body(error);
     }
 

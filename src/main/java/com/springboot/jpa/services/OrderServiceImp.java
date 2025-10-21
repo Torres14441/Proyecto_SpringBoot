@@ -55,6 +55,12 @@ public class OrderServiceImp implements OrderService {
         newOrder.setState("Activa");
 
         List<OrderDetails> details = order.getItems().stream().map(itemDto ->{
+
+            if (itemDto.getQuantity() <= 0) {
+                throw new IllegalArgumentException("La cantidad solicitada para el producto '"
+                        + itemDto.getProduct().getCpr() + "' debe ser mayor que cero.");
+            }
+            
             Product product = productRepository.findByCpr(itemDto.getProduct().getCpr())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
@@ -169,7 +175,7 @@ public class OrderServiceImp implements OrderService {
                 inventoryRepository.save(inventory);
             }
 
-            // se marca la orden como cancelada
+
             order.setState("Cancelada");
             orderRepository.save(order);
 

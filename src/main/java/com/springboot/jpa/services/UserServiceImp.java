@@ -87,6 +87,9 @@ public class UserServiceImp implements UserService {
     public Optional<User> delete(Long id) {
         Optional<User> userOpcional = userRepository.findById(id);
         userOpcional.ifPresent(userDb -> {
+            if(!userDb.isEnabled()){
+                throw new IllegalStateException("El usuario ya está deshabilitado");
+            }
             userDb.setEnabledValue(0);
             userRepository.save(userDb);
         });
