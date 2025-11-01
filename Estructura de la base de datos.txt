@@ -1,0 +1,117 @@
+-- =========================================
+-- CREACIÓN DE TABLAS
+-- =========================================
+
+CREATE TABLE categories (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE type_inventory (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL
+);
+
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(255) UNIQUE
+);
+
+CREATE TABLE localizations (
+    id SERIAL PRIMARY KEY,
+    intern_code VARCHAR(6) NOT NULL
+);
+
+CREATE TABLE products (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    description VARCHAR(1000),
+    price DOUBLE PRECISION NOT NULL,
+    id_type_inv INTEGER NOT NULL,
+    cpr VARCHAR(10),
+    FOREIGN KEY (id_type_inv) REFERENCES type_inventory(id)
+);
+
+CREATE TABLE clients (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(100) NOT NULL,
+    tel VARCHAR(20),
+    ccr VARCHAR(4)
+);
+
+CREATE TABLE users (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL,
+    username VARCHAR(20) UNIQUE NOT NULL,
+    email VARCHAR(255) UNIQUE NOT NULL,
+    password VARCHAR(255) NOT NULL,
+    enabled INTEGER DEFAULT 1 NOT NULL,
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP,
+    status INTEGER
+);
+
+CREATE TABLE products_categories (
+    id SERIAL PRIMARY KEY,
+    product_id INTEGER NOT NULL,
+    category_id INTEGER NOT NULL,
+    UNIQUE (product_id, category_id),
+    FOREIGN KEY (product_id) REFERENCES products(id) ON DELETE CASCADE,
+    FOREIGN KEY (category_id) REFERENCES categories(id) ON DELETE CASCADE
+);
+
+CREATE TABLE users_roles (
+    id SERIAL PRIMARY KEY,
+    user_id INTEGER NOT NULL,
+    role_id INTEGER NOT NULL,
+    assigned_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    UNIQUE (user_id, role_id),
+    FOREIGN KEY (user_id) REFERENCES users(id),
+    FOREIGN KEY (role_id) REFERENCES roles(id)
+);
+
+CREATE TABLE orders (
+    id SERIAL PRIMARY KEY,
+    id_client INTEGER,
+    id_user INTEGER NOT NULL,
+    total NUMERIC(10,2) NOT NULL,
+    created TIMESTAMP,
+    updated TIMESTAMP,
+    status VARCHAR(255) DEFAULT 'Activa',
+    FOREIGN KEY (id_client) REFERENCES clients(id),
+    FOREIGN KEY (id_user) REFERENCES users(id)
+);
+
+CREATE TABLE details_clients (
+    id SERIAL PRIMARY KEY,
+    id_cliente INTEGER NOT NULL,
+    email VARCHAR(100),
+    address VARCHAR(255),
+    created TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    updated TIMESTAMP,
+    FOREIGN KEY (id_cliente) REFERENCES clients(id)
+);
+
+CREATE TABLE details_orders (
+    id SERIAL PRIMARY KEY,
+    id_order INTEGER NOT NULL,
+    id_product INTEGER NOT NULL,
+    quantity INTEGER NOT NULL,
+    unit_price NUMERIC(10,2) NOT NULL,
+    created TIMESTAMP,
+    updated TIMESTAMP,
+    FOREIGN KEY (id_order) REFERENCES orders(id),
+    FOREIGN KEY (id_product) REFERENCES products(id)
+);
+
+CREATE TABLE inventory (
+    id SERIAL PRIMARY KEY,
+    id_product INTEGER NOT NULL,
+    id_localization INTEGER NOT NULL,
+    stock_actual INTEGER DEFAULT 0,
+    stock_min INTEGER DEFAULT 0,
+    update TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+    FOREIGN KEY (id_product) REFERENCES products(id),
+    FOREIGN KEY (id_localization) REFERENCES localizations(id)
+);
+
