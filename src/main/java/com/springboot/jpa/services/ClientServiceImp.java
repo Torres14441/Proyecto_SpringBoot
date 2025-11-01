@@ -2,9 +2,8 @@ package com.springboot.jpa.services;
 
 import com.springboot.jpa.entities.Client;
 import com.springboot.jpa.entities.ClientDetails;
-import com.springboot.jpa.repositories.ClientDetailRepository;
 import com.springboot.jpa.repositories.ClientRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -13,9 +12,14 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class ClientServiceImp implements ClientService {
-    @Autowired
-    private ClientRepository clientRepository;
+
+    private final ClientRepository clientRepository;
+
+    public ClientServiceImp(ClientRepository clientRepository) {
+        this.clientRepository = clientRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -44,6 +48,7 @@ public class ClientServiceImp implements ClientService {
     @Transactional
     public Client save(Client client) {
         client.getDetails().setClient(client);
+        log.info("Saving new client: {}", client.getName());
         return clientRepository.save(client);
     }
 
@@ -73,6 +78,7 @@ public class ClientServiceImp implements ClientService {
                 }
 
             }
+            log.info("Updating client with ID: {}", clientDB.getId());
             return Optional.of(clientRepository.save(clientDB));
 
         }
@@ -85,6 +91,7 @@ public class ClientServiceImp implements ClientService {
     public Optional<Client> delete(Long id) {
         Optional<Client> clientOptional = clientRepository.findById(id);
         clientOptional.ifPresent(client->{
+            log.info("Deleting client with ID: {}", client.getId());
             clientRepository.delete(client);
         });
         return clientOptional;

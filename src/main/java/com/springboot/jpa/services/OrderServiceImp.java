@@ -2,31 +2,32 @@ package com.springboot.jpa.services;
 
 import com.springboot.jpa.entities.*;
 import com.springboot.jpa.repositories.*;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.math.BigDecimal;
 import java.util.List;
 import java.util.Optional;
-import java.util.stream.Collectors;
+
 
 @Service
 public class OrderServiceImp implements OrderService {
-    @Autowired
-    private OrderRepository orderRepository;
 
-    @Autowired
-    private ClientRepository clientRepository;
+    private final OrderRepository orderRepository;
+    private final ClientRepository clientRepository;
+    private final UserRepository userRepository;
+    private final ProductRepository productRepository;
+    private final InventoryRepository inventoryRepository;
 
-    @Autowired
-    private UserRepository userRepository;
+    private static final String CPRNOTFOUND = "No se encontró inventario para el producto con CPR: ";
 
-    @Autowired
-    private ProductRepository productRepository;
-
-    @Autowired
-    private InventoryRepository inventoryRepository;
+    public OrderServiceImp(OrderRepository orderRepository,ClientRepository clientRepository,UserRepository userRepository,ProductRepository productRepository,InventoryRepository inventoryRepository ) {
+        this.orderRepository = orderRepository;
+        this.clientRepository = clientRepository;
+        this.userRepository = userRepository;
+        this.productRepository = productRepository;
+        this.inventoryRepository = inventoryRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -39,6 +40,7 @@ public class OrderServiceImp implements OrderService {
     public Optional<Order> findById(Long id) {
         return orderRepository.findById(id);
     }
+
 
     @Override
     @Transactional
@@ -54,18 +56,18 @@ public class OrderServiceImp implements OrderService {
         newOrder.setClient(client);
         newOrder.setState("Activa");
 
-        List<OrderDetails> details = order.getItems().stream().map(itemDto ->{
+        List<OrderDetails> details = order.getItems().stream().map(itemDto -> {
 
             if (itemDto.getQuantity() <= 0) {
                 throw new IllegalArgumentException("La cantidad solicitada para el producto '"
                         + itemDto.getProduct().getCpr() + "' debe ser mayor que cero.");
             }
-            
+
             Product product = productRepository.findByCpr(itemDto.getProduct().getCpr())
                     .orElseThrow(() -> new RuntimeException("Producto no encontrado"));
 
             Inventory inventory = inventoryRepository.findByProductId(product.getId())
-                    .orElseThrow(() -> new IllegalStateException("No se encontró inventario para el producto con CPR: " + product.getCpr()));
+                    .orElseThrow(() -> new IllegalStateException(CPRNOTFOUND + product.getCpr()));
 
             if (inventory.getStockActual() <= 0) {
                 throw new IllegalStateException("El producto '" + product.getName() + "' no se encuentra disponible en el almacén.");
@@ -84,14 +86,14 @@ public class OrderServiceImp implements OrderService {
             orderDetails.setQuantity(itemDto.getQuantity());
             orderDetails.setUnitPrice(BigDecimal.valueOf(product.getPrice()));
             return orderDetails;
-        }).collect(Collectors.toList());
+        }).toList();
 
         newOrder.setItems(details);
         newOrder.setTotal(newOrder.calcularTotal());
 
         return orderRepository.save(newOrder);
-
     }
+
 
     @Override
     @Transactional
@@ -113,7 +115,7 @@ public class OrderServiceImp implements OrderService {
             for (OrderDetails oldDetail : existingOrder.getItems()) {
                 Product product = oldDetail.getProduct();
                 Inventory inventory = inventoryRepository.findByProductId(product.getId())
-                        .orElseThrow(() -> new IllegalStateException("No se encontró inventario para el producto con CPR: " + product.getCpr()));
+                        .orElseThrow(() -> new IllegalStateException(CPRNOTFOUND + product.getCpr()));
                 inventory.setStockActual(inventory.getStockActual() + oldDetail.getQuantity());
                 inventoryRepository.save(inventory);
             }
@@ -127,7 +129,7 @@ public class OrderServiceImp implements OrderService {
                         .orElseThrow(() -> new IllegalStateException("Producto no encontrado"));
 
                 Inventory inventory = inventoryRepository.findByProductId(product.getId())
-                        .orElseThrow(() -> new IllegalStateException("No se encontró inventario para el producto con CPR: " + product.getCpr()));
+                        .orElseThrow(() -> new IllegalStateException(CPRNOTFOUND + product.getCpr()));
 
                 int cantidadSolicitada = itemDto.getQuantity();
                 if (inventory.getStockActual() < cantidadSolicitada) {
@@ -143,7 +145,7 @@ public class OrderServiceImp implements OrderService {
                 detail.setQuantity(cantidadSolicitada);
                 detail.setUnitPrice(BigDecimal.valueOf(product.getPrice()));
                 return detail;
-            }).collect(Collectors.toList());
+            }).toList();
 
             existingOrder.getItems().addAll(newDetails);
             existingOrder.setTotal(existingOrder.calcularTotal());
@@ -169,7 +171,7 @@ public class OrderServiceImp implements OrderService {
             for (OrderDetails detail : order.getItems()) {
                 Product product = detail.getProduct();
                 Inventory inventory = inventoryRepository.findByProductId(product.getId())
-                        .orElseThrow(() -> new IllegalStateException("No se encontró inventario para el producto con CPR: " + product.getCpr()));
+                        .orElseThrow(() -> new IllegalStateException(CPRNOTFOUND + product.getCpr()));
 
                 inventory.setStockActual(inventory.getStockActual() + detail.getQuantity());
                 inventoryRepository.save(inventory);

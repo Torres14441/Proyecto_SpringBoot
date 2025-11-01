@@ -1,7 +1,6 @@
 package com.springboot.jpa.services;
 import com.springboot.jpa.entities.User;
 import com.springboot.jpa.repositories.UserRepository;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
@@ -16,8 +15,12 @@ import java.util.stream.Collectors;
 
 @Service
 public class JpaUserDetailService implements UserDetailsService {
-    @Autowired
-    private UserRepository repository;
+
+    private final UserRepository repository;
+
+    public JpaUserDetailService( UserRepository repository) {
+        this.repository = repository;
+    }
 
     @Transactional(readOnly = true)
     @Override

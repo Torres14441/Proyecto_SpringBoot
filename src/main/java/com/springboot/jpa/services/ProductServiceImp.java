@@ -5,9 +5,10 @@ import com.springboot.jpa.entities.Product;
 import com.springboot.jpa.entities.Type_Inventory;
 import com.springboot.jpa.repositories.CategoriesRepository;
 import com.springboot.jpa.repositories.ProductRepository;
-import com.springboot.jpa.repositories.Type_InventoryRepository;
+import com.springboot.jpa.repositories.TypeInventoryRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,15 +17,20 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class ProductServiceImp implements ProductService {
-    @Autowired
-    private ProductRepository repository;
 
-    @Autowired
-    private Type_InventoryRepository TIrepository;
+    private final ProductRepository repository;
 
-    @Autowired
-    private CategoriesRepository Crepository;
+    private final TypeInventoryRepository tirepository;
+
+    private final CategoriesRepository crepository;
+
+    public ProductServiceImp(ProductRepository repository, TypeInventoryRepository tirepository, CategoriesRepository crepository) {
+        this.repository = repository;
+        this.tirepository = tirepository;
+        this.crepository = crepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -63,6 +69,7 @@ public class ProductServiceImp implements ProductService {
 
         List<Category> categorias = validarCategorias(product.getCategories());
         product.setCategories(categorias);
+        log.info("saving product into database");
         return repository.save(product);
     }
 
@@ -88,6 +95,7 @@ public class ProductServiceImp implements ProductService {
 
             List<Category> categories = validarCategorias(product.getCategories());
             productDB.setCategories(categories);
+            log.info("Updating product with id: {}", id);
             return Optional.of(repository.save(productDB));
 
         }
@@ -98,7 +106,9 @@ public class ProductServiceImp implements ProductService {
     @Transactional
     public Optional<Product> delete(Long id) {
         Optional<Product> productOptional = repository.findById(id);
-        productOptional.ifPresent(productdb -> {repository.delete(productdb);});
+        productOptional.ifPresent(productdb -> {
+            log.info("Deleting product with id: {}", id);
+            repository.delete(productdb);});
         return productOptional;
     }
 
@@ -107,12 +117,11 @@ public class ProductServiceImp implements ProductService {
             throw new IllegalArgumentException("El nombre del tipo de inventario no puede estar vacío");
         }
 
-        return TIrepository.findByName(name)
+        return tirepository.findByName(name)
                 .orElseThrow(() -> new EntityNotFoundException(
                         String.format("El tipo de inventario '%s' no existe en el sistema", name)
                 ));
     }
-
     private List<Category> validarCategorias(List<Category> recibidas) {
         List<Category> validadas = new ArrayList<>();
 
@@ -122,7 +131,7 @@ public class ProductServiceImp implements ProductService {
                 throw new IllegalArgumentException("El nombre de la categoría no puede estar vacío");
             }
 
-            Category existente = Crepository.findByName(nombre)
+            Category existente = crepository.findByName(nombre)
                     .orElseThrow(() -> new EntityNotFoundException(
                             String.format("La categoría '%s' no existe en el sistema", nombre)
                     ));
@@ -132,8 +141,6 @@ public class ProductServiceImp implements ProductService {
 
         return validadas;
     }
-
-
     private Double validatePrice(Double price) {
         if (price == null) {
             throw new IllegalArgumentException("El precio no puede ser nulo.");

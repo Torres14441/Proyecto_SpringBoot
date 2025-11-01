@@ -4,8 +4,8 @@ import com.springboot.jpa.entities.Rol;
 import com.springboot.jpa.entities.User;
 import com.springboot.jpa.repositories.RolRepository;
 import com.springboot.jpa.repositories.UserRepository;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.security.crypto.password.PasswordEncoder;
 
@@ -15,15 +15,18 @@ import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class UserServiceImp implements UserService {
-    @Autowired
-    private UserRepository userRepository;
 
-    @Autowired
-    private RolRepository rolRepository;
+    private final UserRepository userRepository;
+    private final RolRepository rolRepository;
+    private final PasswordEncoder passwordEncoder;
 
-    @Autowired
-    private PasswordEncoder passwordEncoder;
+    public UserServiceImp(UserRepository userRepository, RolRepository rolRepository, PasswordEncoder passwordEncoder) {
+        this.userRepository = userRepository;
+        this.rolRepository = rolRepository;
+        this.passwordEncoder = passwordEncoder;
+    }
 
 
     @Override
@@ -53,6 +56,7 @@ public class UserServiceImp implements UserService {
         user.setEnabledValue(1);
         user.setCreated(new Date());
         user.setUpdated(new Date());
+        log.info("UserServiceImp save user {}", user);
         return userRepository.save(user);
     }
 
@@ -67,16 +71,14 @@ public class UserServiceImp implements UserService {
             userDb.setUsername(user.getUsername());
             userDb.setEmail(user.getEmail());
 
-
-            if (user.getPassword() != null && !user.getPassword().isBlank()) {
-                if (!passwordEncoder.matches(user.getPassword(), userDb.getPassword())) {
-                    userDb.setPassword(passwordEncoder.encode(user.getPassword()));
-                }
+            if(user.getPassword() != null && !user.getPassword().isBlank() &&
+                    !passwordEncoder.matches(user.getPassword(), userDb.getPassword())){
+                userDb.setPassword(passwordEncoder.encode(user.getPassword()));
             }
-
 
             List<Rol> roles = asignarRol(user.isAdmin());
             userDb.setRoles(roles);
+            log.info("UserServiceImp update user {}", user);
             return Optional.of(userRepository.save(userDb));
         }
         return userOpcional;
@@ -91,6 +93,7 @@ public class UserServiceImp implements UserService {
                 throw new IllegalStateException("El usuario ya está deshabilitado");
             }
             userDb.setEnabledValue(0);
+            log.info("UserServiceImp logical delete for user {}", userDb);
             userRepository.save(userDb);
         });
         return userOpcional;

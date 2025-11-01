@@ -2,56 +2,63 @@ package com.springboot.jpa.services;
 
 import com.springboot.jpa.entities.Localization;
 import com.springboot.jpa.repositories.LocalizationRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class LocalizationServiceImp implements LocalizationService {
 
-    @Autowired
-    private LocalizationRepository LCrepository;
 
+    private final LocalizationRepository lcrepository;
+
+    public LocalizationServiceImp( LocalizationRepository lcrepository) {
+        this.lcrepository = lcrepository;
+    }
     @Override
     public List<Localization> findAll() {
-        return LCrepository.findAll();
+        return lcrepository.findAll();
     }
 
     @Override
     public Optional<Localization> findByInternCode(String internCode) {
-        return LCrepository.findByInternCode(internCode);
+        return lcrepository.findByInternCode(internCode);
     }
 
 
     @Override
     public Optional<Localization> findById(Long id) {
-        return LCrepository.findById(id);
+        return lcrepository.findById(id);
     }
 
     @Override
     public Localization save(Localization localization) {
-        return LCrepository.save(localization);
+        log.info("saving localization into database");
+        return lcrepository.save(localization);
     }
 
     @Override
     public Optional<Localization> update(Long id, Localization localization) {
-        Optional<Localization> localizationOptional = LCrepository.findById(id);
+        Optional<Localization> localizationOptional = lcrepository.findById(id);
         if (localizationOptional.isPresent()) {
             Localization lcDB = localizationOptional.orElseThrow();
 
             lcDB.setInternCode(localization.getInternCode());
-            return Optional.of(LCrepository.save(lcDB));
+            log.info("Updating inventory with id: {}", id);
+            return Optional.of(lcrepository.save(lcDB));
         }
         return localizationOptional;
     }
 
     @Override
     public Optional<Localization> delete(Long id) {
-        Optional<Localization> localizationOptional = LCrepository.findById(id);
+        Optional<Localization> localizationOptional = lcrepository.findById(id);
         localizationOptional.ifPresent(lcDB -> {
-            LCrepository.delete(lcDB);
+            log.info("Deleting localization with id: {}", id);
+            lcrepository.delete(lcDB);
         });
         return localizationOptional;
     }

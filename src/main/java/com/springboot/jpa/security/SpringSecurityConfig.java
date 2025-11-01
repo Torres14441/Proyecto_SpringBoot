@@ -24,8 +24,25 @@ import java.util.Arrays;
 @Configuration
 public class SpringSecurityConfig {
 
-    @Autowired
-    private AuthenticationConfiguration authenticationConfiguration;
+    public static final String API_INVENTORY = "/api/inventory/**";
+    public static final String API_CATEGORIES = "/api/categories/**";
+    public static final String API_CLIENTS = "/api/clients/**";
+    public static final String API_ORDERS = "/api/orders/**";
+    public static final String ADMIN = "ADMIN";
+    public static final String USER = "USER";
+    public static final String API_PRODUCTS = "/api/products/**";
+    public static final String API_TYPES = "/api/types/**";
+    public static final String API_LOCALIZATIONS = "/api/localizations/**";
+    public static final String API_USERS = "/api/users/**";
+    public static final String SWAGGER_UI = "/swagger-ui/**";
+    public static final String V_3_API_DOCS = "/v3/api-docs/**";
+
+
+    private final AuthenticationConfiguration authenticationConfiguration;
+
+    public SpringSecurityConfig(@Autowired AuthenticationConfiguration authenticationConfiguration) {
+        this.authenticationConfiguration = authenticationConfiguration;
+    }
 
     @Bean
     AuthenticationManager authenticationManager() throws Exception {
@@ -52,35 +69,38 @@ public class SpringSecurityConfig {
 
     @Bean
     SecurityFilterChain filterChain(HttpSecurity http) throws  Exception {
-        return  http.authorizeHttpRequests((authz)-> authz
+        return  http.authorizeHttpRequests(authz-> authz
+                        .requestMatchers(SWAGGER_UI).permitAll()
+                        .requestMatchers(V_3_API_DOCS).permitAll()
+
                         // Usuarios: solo el admin tiene acceso
-                        .requestMatchers("/api/users/**").hasRole("ADMIN")
+                        .requestMatchers(API_USERS).hasRole(ADMIN)
 
                         // Productos, tipos y localizaciones: solo lectura para el usuario
-                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/api/types/**", "/api/localizations/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/products/**", "/api/types/**", "/api/localizations/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API_PRODUCTS, API_TYPES, API_LOCALIZATIONS).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(API_PRODUCTS, API_TYPES, API_LOCALIZATIONS).hasRole(ADMIN)
 
                         // Inventario: el usuario puede crear, pero no modificar ni eliminar
-                        .requestMatchers(HttpMethod.GET, "/api/inventory/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/inventory/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/inventory/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/inventory/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API_INVENTORY).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.POST, API_INVENTORY).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.PUT, API_INVENTORY).hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, API_INVENTORY).hasRole(ADMIN)
 
                         // Categorías: lo mismo que el inventario
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/categories/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/categories/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/categories/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API_CATEGORIES).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.POST, API_CATEGORIES).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.PUT, API_CATEGORIES).hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, API_CATEGORIES).hasRole(ADMIN)
 
                         // Clientes: Los usuarios solo pueden ver la lista
-                        .requestMatchers(HttpMethod.GET, "/api/clients/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers("/api/clients/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API_CLIENTS).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(API_CLIENTS).hasRole(ADMIN)
 
                         // Ordenes: el usuario puede ver y crear ordenes pero solo el admin puede modificar y eliminar
-                        .requestMatchers(HttpMethod.GET, "/api/orders/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.POST, "/api/orders/**").hasAnyRole("USER", "ADMIN")
-                        .requestMatchers(HttpMethod.PUT, "/api/orders/**").hasRole("ADMIN")
-                        .requestMatchers(HttpMethod.DELETE, "/api/orders/**").hasRole("ADMIN")
+                        .requestMatchers(HttpMethod.GET, API_ORDERS).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.POST, API_ORDERS).hasAnyRole(USER, ADMIN)
+                        .requestMatchers(HttpMethod.PUT, API_ORDERS).hasRole(ADMIN)
+                        .requestMatchers(HttpMethod.DELETE, API_ORDERS).hasRole(ADMIN)
 
                         .anyRequest().authenticated())
                 .addFilter(new JwtAuthenticationFilter(authenticationManager()))

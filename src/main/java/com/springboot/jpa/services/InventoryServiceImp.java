@@ -7,7 +7,7 @@ import com.springboot.jpa.repositories.InventoryRepository;
 import com.springboot.jpa.repositories.LocalizationRepository;
 import com.springboot.jpa.repositories.ProductRepository;
 import jakarta.persistence.EntityNotFoundException;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -16,16 +16,18 @@ import java.util.Optional;
 
 
 @Service
+@Slf4j
 public class InventoryServiceImp implements InventoryService {
 
-    @Autowired
-    private InventoryRepository invRepository;
+    private final InventoryRepository invRepository;
+    private final LocalizationRepository localizationRepository;
+    private final ProductRepository productRepository;
 
-    @Autowired
-    private LocalizationRepository localizationRepository;
-
-    @Autowired
-    private ProductRepository productRepository;
+    public InventoryServiceImp(InventoryRepository invRepository, LocalizationRepository localizationRepository, ProductRepository productRepository) {
+        this.invRepository = invRepository;
+        this.localizationRepository = localizationRepository;
+        this.productRepository = productRepository;
+    }
 
     @Override
     @Transactional(readOnly = true)
@@ -55,6 +57,7 @@ public class InventoryServiceImp implements InventoryService {
         String interncode = inventory.getLocalization().getInternCode();
         Localization localization = validateLocalization(interncode);
         inventory.setLocalization(localization);
+        log.info("saving inventory into database");
         return invRepository.save(inventory);
     }
 
@@ -76,6 +79,7 @@ public class InventoryServiceImp implements InventoryService {
             invDB.setStockMin(inventory.getStockMin());
             invDB.setStockActual(inventory.getStockActual());
 
+            log.info("Updating inventory with id: {}", id);
             return Optional.of(invRepository.save(invDB));
         }
         return invOptional;
@@ -86,6 +90,7 @@ public class InventoryServiceImp implements InventoryService {
     public Optional<Inventory> delete(Long id) {
         Optional<Inventory> invOptional = invRepository.findById(id);
         invOptional.ifPresent(inv -> {
+            log.info("Eliminando inventario con id: {}", id);
             invRepository.delete(inv);
         });
         return invOptional;

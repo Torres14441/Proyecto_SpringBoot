@@ -2,17 +2,21 @@ package com.springboot.jpa.services;
 
 import com.springboot.jpa.entities.Category;
 import com.springboot.jpa.repositories.CategoriesRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
 import java.util.Optional;
 
 @Service
+@Slf4j
 public class CategorieServiceImp  implements CategorieService {
-    @Autowired
-    private CategoriesRepository catrepository;
 
+    private final CategoriesRepository catrepository;
+
+    public CategorieServiceImp(CategoriesRepository catrepository) {
+        this.catrepository = catrepository;
+    }
 
     @Override
     public List<Category> findAll() {
@@ -49,9 +53,11 @@ public class CategorieServiceImp  implements CategorieService {
     @Override
     public Optional<Category> delete(Long id) {
         Optional<Category> optionalCat = findById(id);
-        optionalCat.ifPresent(catdb ->{
+        optionalCat.ifPresent(catdb -> {
+            log.info("Deleting category with ID: {}", catdb.getId());
             catrepository.delete(catdb);
         });
         return optionalCat;
     }
 }
+

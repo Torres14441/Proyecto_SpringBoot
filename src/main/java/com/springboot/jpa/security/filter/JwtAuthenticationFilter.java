@@ -1,7 +1,6 @@
 package com.springboot.jpa.security.filter;
 
-import com.fasterxml.jackson.core.exc.StreamReadException;
-import com.fasterxml.jackson.databind.DatabindException;
+
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.springboot.jpa.entities.User;
 import io.jsonwebtoken.Claims;
@@ -27,6 +26,7 @@ import static com.springboot.jpa.security.TokenJwtConfig.*;
 
 public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilter {
     private AuthenticationManager authenticationManager;
+    private static final String MESSAGE = "message";
 
     public JwtAuthenticationFilter(AuthenticationManager authenticationManager) {
         this.authenticationManager = authenticationManager;
@@ -43,11 +43,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
             user = new ObjectMapper().readValue(request.getInputStream(), User.class);
             username = user.getUsername();
             password = user.getPassword();
-        }catch (StreamReadException e){
-            e.printStackTrace();
-        }catch (DatabindException e){
-            e.printStackTrace();
-        }catch (IOException e){
+        }catch ( IOException e){
             e.printStackTrace();
         }
 
@@ -83,7 +79,7 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
         Map<String, String> body = new HashMap<>();
         body.put("token", token);
         body.put("username", username);
-        body.put("message", String.format("Hola %s has iniciado sesión con exito", username));
+        body.put(MESSAGE, String.format("Hola %s has iniciado sesión con exito", username));
 
 
         response.getWriter().write(new ObjectMapper().writeValueAsString(body));
@@ -95,10 +91,10 @@ public class JwtAuthenticationFilter extends UsernamePasswordAuthenticationFilte
     protected void unsuccessfulAuthentication(HttpServletRequest request, HttpServletResponse response, AuthenticationException failed) throws IOException{
         Map<String, String> body = new HashMap<>();
         if (failed instanceof DisabledException) {
-            body.put("message", "El usuario está deshabilitado. Contacta al administrador.");
+            body.put(MESSAGE, "El usuario está deshabilitado. Contacta al administrador.");
         }
         else if (failed instanceof BadCredentialsException) {
-            body.put("message", "Username o password incorrectos.");
+            body.put(MESSAGE, "Username o password incorrectos.");
         }
         response.getWriter().write(new ObjectMapper().writeValueAsString(body));
         response.setStatus(401);

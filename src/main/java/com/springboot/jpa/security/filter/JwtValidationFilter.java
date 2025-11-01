@@ -1,7 +1,6 @@
 package com.springboot.jpa.security.filter;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.springboot.jpa.security.SimpleGrantedAuthorityJsonCreator;
 import io.jsonwebtoken.Claims;
 import io.jsonwebtoken.JwtException;
 import io.jsonwebtoken.Jwts;
@@ -43,16 +42,7 @@ public class JwtValidationFilter extends BasicAuthenticationFilter {
             Claims claims = Jwts.parser().verifyWith(SECRET_KEY).build()
                     .parseSignedClaims(token).getPayload();
             String username = claims.getSubject();
-            /*
-            Object authoritiesClaims = claims.get("authorities");
 
-            Collection<? extends GrantedAuthority> authorities = Arrays.asList(
-                    new ObjectMapper()
-                            .addMixIn(SimpleGrantedAuthority.class, SimpleGrantedAuthorityJsonCreator.class)
-                            .readValue(authoritiesClaims.toString().getBytes(), SimpleGrantedAuthority[].class)
-            );
-
-             */
             List<String> roles = claims.get("authorities", List.class);
 
             Collection<? extends GrantedAuthority> authorities = roles.stream()

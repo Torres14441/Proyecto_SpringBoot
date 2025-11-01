@@ -5,7 +5,7 @@ import com.springboot.jpa.entities.Type_Inventory;
 import java.util.List;
 import java.util.Optional;
 
-public interface Type_InventoryService {
+public interface TypeInventoryService {
     List<Type_Inventory> findAll();
     Optional<Type_Inventory> findByName(String name);
     Optional<Type_Inventory> findById(Long id);

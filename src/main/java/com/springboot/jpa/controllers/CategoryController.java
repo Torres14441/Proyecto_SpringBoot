@@ -2,8 +2,8 @@ package com.springboot.jpa.controllers;
 
 import com.springboot.jpa.entities.Category;
 import com.springboot.jpa.services.CategorieService;
+import io.swagger.v3.oas.annotations.Operation;
 import jakarta.validation.Valid;
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.validation.BindingResult;
@@ -17,8 +17,12 @@ import java.util.Optional;
 @RestController
 @RequestMapping("/api/categories")
 public class CategoryController {
-    @Autowired
-    private CategorieService categorieService;
+
+    private final CategorieService categorieService;
+
+    public CategoryController(CategorieService categorieService) {
+        this.categorieService = categorieService;
+    }
 
     @GetMapping
     public List<Category> findAll(){
@@ -26,6 +30,7 @@ public class CategoryController {
     }
 
     @GetMapping("/{id}")
+    @Operation(summary = "Permite consultar una categoría por su Id")
     public ResponseEntity<Category> findById(@PathVariable Long id){
         Optional<Category> category = categorieService.findById(id);
         if(category.isPresent()){
@@ -35,7 +40,7 @@ public class CategoryController {
     }
 
     @PostMapping
-    public ResponseEntity<?> save(@Valid @RequestBody Category category,  BindingResult result){
+    public ResponseEntity<Object> save(@Valid @RequestBody Category category, BindingResult result){
         if(result.hasErrors()){
             return validation(result);
         }
@@ -43,7 +48,7 @@ public class CategoryController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<?> update(@PathVariable Long id ,@Valid @RequestBody Category category, BindingResult result){
+    public ResponseEntity<Object> update(@PathVariable Long id ,@Valid @RequestBody Category category, BindingResult result){
         if(result.hasErrors()){
             return validation(result);
         }
@@ -54,12 +59,10 @@ public class CategoryController {
         return ResponseEntity.notFound().build();
     }
 
-    private ResponseEntity<?> validation(BindingResult result) {
+    private ResponseEntity<Object> validation(BindingResult result) {
         Map<String, String> errors = new HashMap<>();
 
-        result.getFieldErrors().forEach(err -> {
-            errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage());
-        });
+        result.getFieldErrors().forEach(err -> errors.put(err.getField(), "El campo " + err.getField() + " " + err.getDefaultMessage()));
         result.getGlobalErrors().forEach(err ->
                 errors.put("error", err.getDefaultMessage())
         );
